@@ -77,10 +77,14 @@ def get_api_answer(timestamp: int) -> dict:
         payload = {'from_date': timestamp}
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
     except requests.RequestException:
-        raise APIRequestError(f'API error. Status code: {response.status_code}')
+        raise APIRequestError(
+            f'API error. Status code: {response.status_code}'
+        )
 
     if response.status_code != HTTPStatus.OK:
-        raise APIRequestError(f'API error. Status code: {response.status_code}')
+        raise APIRequestError(
+            f'API error. Status code: {response.status_code}'
+        )
     return response.json()
 
 
