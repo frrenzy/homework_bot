@@ -6,7 +6,7 @@ No more! This bot will check for you!
 Fill `.env` with your tokens as specified in `.env.example` and run this commands in project folder (active venv recommended):
 ```shell
 pip install -r requirements.txt
-python main.py
+python homework.py
 ```
 
 ## Author
