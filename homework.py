@@ -1,12 +1,12 @@
-from http import HTTPStatus
+import json
 import logging
 import os
 import sys
 import time
+from http import HTTPStatus
 
 import requests
 import telegram
-
 from dotenv import load_dotenv
 
 from exceptions import (APIRequestError, BaseAPIError, EmptyResponseError,
@@ -45,7 +45,7 @@ def check_tokens():
 
     :raises ImproperlyConfiguredError: if required tokens are missing.
     """
-    if not (PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID):
+    if not all((PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)):
         raise ImproperlyConfigured('Required tokens are missing in .env file.')
 
 
@@ -55,6 +55,7 @@ def send_message(bot: telegram.Bot, message: str) -> None:
 
     :param Bot bot: The bot instance to send message from
     :param str message: The message to be sent
+    :raises telegram.TelegramError: if message can not be sent
     """
     try:
         bot.send_message(
@@ -62,7 +63,7 @@ def send_message(bot: telegram.Bot, message: str) -> None:
             text=message,
         )
         logger.debug(f'Message sent: {message}')
-    except Exception:
+    except telegram.TelegramError:
         logger.error('Can not send message')
 
 
@@ -72,6 +73,7 @@ def get_api_answer(timestamp: int) -> dict:
     :param int timestamp: The timestamp to get homeworks from
     :return: The response
     :raises APIRequestError: if response status_code is not OK
+    :raises ResponseTypeError: if response is not valid JSON
     """
     try:
         payload = {'from_date': timestamp}
@@ -85,7 +87,10 @@ def get_api_answer(timestamp: int) -> dict:
         raise APIRequestError(
             f'API error. Status code: {response.status_code}'
         )
-    return response.json()
+    try:
+        return response.json()
+    except json.decoder.JSONDecodeError:
+        raise ResponseTypeError('API response is of wrong type.')
 
 
 def check_response(response: dict) -> None:
@@ -94,8 +99,7 @@ def check_response(response: dict) -> None:
 
     :param dict response: The response from ENDPOINT
     :raises ResponseTypeError: if 'homeworks' or 'current_date' are not present
-    in response, or 'lesson_name' or 'status' are not present in homework,
-    or status not in HOMEWORK_VERDICTS
+    in response
     :raises EmptyResponseError: if 'homeworks' list in response is empty
     """
     if 'homeworks' not in response:
@@ -106,12 +110,6 @@ def check_response(response: dict) -> None:
         raise ResponseTypeError('API response is of wrong type.')
     if len(response['homeworks']) == 0:
         raise EmptyResponseError('API response is empty.')
-    if 'status' not in response['homeworks'][0]:
-        raise ResponseTypeError('API response is of wrong type.')
-    if 'homework_name' not in response['homeworks'][0]:
-        raise ResponseTypeError('API response is of wrong type.')
-    if response['homeworks'][0]['status'] not in HOMEWORK_VERDICTS:
-        raise ResponseTypeError('API response is of wrong type.')
 
 
 def parse_status(homework: dict) -> str:
@@ -120,6 +118,8 @@ def parse_status(homework: dict) -> str:
 
     :param dict homework: Dict from ENDPOINT to search status in
     :return: Message string with status
+    :raises ResponseTypeError: if 'homework_name' or 'status' are not present or
+    'status' is not present in HOMEWORK_VERDICTS
     """
     try:
         homework_name = homework['homework_name']
@@ -162,7 +162,7 @@ def main():
             logger.debug('New statuses are not present')
 
         except Exception as error:
-            logger.error('aboba')
+            logger.error(f'Exception: {error}', exc_info=True)
             message = f'Сбой в работе программы: {error}'
             send_message(bot, message)
 

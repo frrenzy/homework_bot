@@ -1,10 +1,16 @@
-class ImproperlyConfigured(Exception):
+class BaseError(Exception):
+    """Base exception."""
+
+    pass
+
+
+class ImproperlyConfigured(BaseError):
     """Exception raised when required configuration is missing."""
 
     pass
 
 
-class BaseAPIError(Exception):
+class BaseAPIError(BaseError):
     """Exception raised when API returns not OK response."""
 
     pass
@@ -16,7 +22,7 @@ class ResponseTypeError(BaseAPIError, TypeError):
     pass
 
 
-class EmptyResponseError(ValueError):
+class EmptyResponseError(BaseError):
     """Exception raised when response.homeworks list is empty."""
 
     pass
