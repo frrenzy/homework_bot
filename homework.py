@@ -118,8 +118,8 @@ def parse_status(homework: dict) -> str:
 
     :param dict homework: Dict from ENDPOINT to search status in
     :return: Message string with status
-    :raises ResponseTypeError: if 'homework_name' or 'status' are not present or
-    'status' is not present in HOMEWORK_VERDICTS
+    :raises ResponseTypeError: if 'homework_name' or 'status' are not present
+    or 'status' is not present in HOMEWORK_VERDICTS
     """
     try:
         homework_name = homework['homework_name']
