@@ -9,8 +9,13 @@ import requests
 import telegram
 from dotenv import load_dotenv
 
-from exceptions import (APIRequestError, BaseAPIError, EmptyResponseError,
-                        ImproperlyConfigured, ResponseTypeError)
+from exceptions import (
+    APIRequestError,
+    BaseAPIError,
+    EmptyResponseError,
+    ImproperlyConfigured,
+    ResponseTypeError,
+)
 
 load_dotenv()
 
@@ -35,7 +40,7 @@ HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.'
+    'rejected': 'Работа проверена: у ревьюера есть замечания.',
 }
 
 
@@ -106,7 +111,7 @@ def check_response(response: dict) -> None:
         raise ResponseTypeError('API response is of wrong type.')
     if 'current_date' not in response:
         raise ResponseTypeError('API response is of wrong type.')
-    if not type(response['homeworks']) is list:
+    if type(response['homeworks']) is not list:
         raise ResponseTypeError('API response is of wrong type.')
     if len(response['homeworks']) == 0:
         raise EmptyResponseError('API response is empty.')
@@ -123,8 +128,12 @@ def parse_status(homework: dict) -> str:
     """
     try:
         homework_name = homework['homework_name']
+        lesson_name = homework['lesson_name']
         verdict = HOMEWORK_VERDICTS[homework['status']]
-        return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+        return (
+            f'Изменился статус проверки работы "{lesson_name}"'
+            f'({homework_name}). {verdict}'
+        )
     except KeyError:
         raise ResponseTypeError('API response is of wrong type.')
 
@@ -141,18 +150,22 @@ def main():
 
     is_api_error = False
 
+    timestamp = int(time.time()) - 10 * 60
+
     while True:
         try:
-            timestamp = int(time.time())
             response = get_api_answer(timestamp)
             check_response(response)
-            message = '\n'.join(parse_status(hw)
-                                for hw in response['homeworks'])
+            message = '\n'.join(
+                parse_status(hw) for hw in response['homeworks']
+            )
             is_api_error = False
             send_message(bot, message)
+            timestamp = response['current_date']
 
         except BaseAPIError as error:
             logger.error(error)
+            timestamp += 10 * 60
             if not is_api_error:
                 is_api_error = True
                 message = f'Сбой в работе программы: {error}'
