@@ -46,7 +46,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """
-    Checks availability of required tokens.
+    Check availability of required tokens.
 
     :raises ImproperlyConfiguredError: if required tokens are missing.
     """
@@ -150,7 +150,11 @@ def main():
 
     is_api_error = False
 
-    timestamp = int(time.time()) - 10 * 60
+    ten_minutes_in_seconds = 10 * 60
+
+    timestamp = int(time.time()) - ten_minutes_in_seconds
+
+    counter = 0
 
     while True:
         try:
@@ -173,6 +177,11 @@ def main():
 
         except EmptyResponseError:
             logger.debug('New statuses are not present')
+            if counter == 0:
+                send_message(bot, 'I am alive')
+                counter = 24 * 6
+            else:
+                counter -= 1
 
         except Exception as error:
             logger.error(f'Exception: {error}', exc_info=True)
@@ -180,7 +189,6 @@ def main():
             send_message(bot, message)
 
         finally:
-            ten_minutes_in_seconds = 10 * 60
             time.sleep(ten_minutes_in_seconds)
 
 
