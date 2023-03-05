@@ -38,9 +38,9 @@ HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 
 HOMEWORK_VERDICTS = {
-    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
+    'approved': 'Работа принята.',
     'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.',
+    'rejected': 'Нужны фиксы.',
 }
 
 
@@ -131,8 +131,7 @@ def parse_status(homework: dict) -> str:
         lesson_name = homework['lesson_name']
         verdict = HOMEWORK_VERDICTS[homework['status']]
         return (
-            f'Изменился статус проверки работы "{lesson_name}"'
-            f'({homework_name}). {verdict}'
+            f'{verdict}. {lesson_name}({homework_name})'
         )
     except KeyError:
         raise ResponseTypeError('API response is of wrong type.')
